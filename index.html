@@ -3,42 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Arena — Battle of the AI Tools</title>
-  <meta name="description" content="Compare AI tools head-to-head in epic battles. ChatGPT vs Claude vs Gemini and more. Vote for your champion.">
-  <meta property="og:title" content="AI Arena — Battle of the AI Tools">
-  <meta property="og:description" content="Compare AI tools head-to-head. Pick your fighters. Cast your vote.">
+  <title>AI Arena — Which AI Tool Wins?</title>
+  <meta name="description" content="Compare AI tools head-to-head. ChatGPT vs Claude vs Gemini and more. Pick your fighters, see the stats, cast your vote.">
+  <meta property="og:title" content="AI Arena — Which AI Tool Wins?">
+  <meta property="og:description" content="Compare AI tools head-to-head. Pick your fighters. See who wins.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="AI Arena — Battle of the AI Tools">
-  <meta name="twitter:description" content="Compare AI tools head-to-head. Pick your fighters. Cast your vote.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
+  <!-- Ambient background -->
+  <div class="ambient">
+    <div class="ambient-orb"></div>
+    <div class="ambient-orb"></div>
+    <div class="ambient-orb"></div>
+  </div>
+
   <!-- Header -->
   <header class="header">
-    <h1>AI ARENA</h1>
-    <div class="subtitle">Battle of the AI Tools</div>
-    <div class="tagline">Pick your fighters. Compare stats. Cast your vote.</div>
+    <div class="header-badge">Compare · Vote · Decide</div>
+    <h1><span>AI Arena</span></h1>
+    <div class="subtitle">Which AI tool actually wins?</div>
   </header>
 
-  <!-- Navigation -->
+  <!-- Nav -->
   <nav class="nav">
-    <button class="nav-btn active" data-screen="select">⚔️ Battle</button>
-    <button class="nav-btn" data-screen="rankings">🏆 Rankings</button>
+    <button class="nav-btn active" data-screen="select">Battle</button>
+    <button class="nav-btn" data-screen="rankings">Rankings</button>
   </nav>
 
   <!-- Select Screen -->
   <div class="screen active" id="screen-select">
-    <div class="select-prompt" id="select-prompt">
-      Choose <span class="count">2</span> fighters to battle
-    </div>
-    <div class="tools-grid" id="tools-grid"></div>
-    <div class="fight-btn-wrap">
-      <button class="fight-btn" id="fight-btn" onclick="arena.startBattle()">⚔️ BATTLE!</button>
+    <div class="container">
+      <!-- Quick Pick -->
+      <div class="quick-pick">
+        <span class="quick-pick-label">I need help with →</span>
+        <div class="quick-pick-options" id="quick-pick-options"></div>
+      </div>
+
+      <div class="select-prompt" id="select-prompt">
+        Select <span class="highlight">2 tools</span> to battle
+      </div>
+
+      <div class="tools-grid" id="tools-grid"></div>
+
+      <div class="fight-wrap">
+        <button class="fight-btn" id="fight-btn" onclick="arena.startBattle()">Battle →</button>
+      </div>
     </div>
   </div>
 
@@ -47,37 +60,37 @@
 
   <!-- Rankings Screen -->
   <div class="screen" id="screen-rankings">
-    <div class="sort-controls" id="sort-controls"></div>
-    <table class="rankings-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Tool</th>
-          <th>Score</th>
-          <th></th>
-          <th>Best For</th>
-        </tr>
-      </thead>
-      <tbody id="rankings-body"></tbody>
-    </table>
+    <div class="container">
+      <div class="rankings-header">
+        <h2>Power Rankings</h2>
+        <p>Sorted by overall score. Click a category to re-rank.</p>
+      </div>
+      <div class="sort-bar" id="sort-bar"></div>
+      <div class="rank-list" id="rank-list"></div>
+    </div>
   </div>
 
   <!-- Share Modal -->
-  <div class="modal-overlay" id="share-modal" onclick="if(event.target===this)arena.closeShare()">
-    <div class="modal">
-      <h3>📤 Share This Battle</h3>
-      <input class="share-url" id="share-url" readonly>
-      <div class="share-buttons">
-        <button class="share-btn twitter" onclick="arena.shareTwitter()">𝕏 Tweet</button>
-        <button class="share-btn linkedin" onclick="arena.shareLinkedIn()">in LinkedIn</button>
-        <button class="share-btn copy" onclick="arena.copyShareURL()">📋 Copy Link</button>
+  <div class="modal-bg" id="share-modal" onclick="if(event.target===this)arena.closeShare()">
+    <div class="modal-box">
+      <h3>Share This Battle</h3>
+      <input class="share-input" id="share-input" readonly>
+      <div class="share-row">
+        <button class="share-btn x-btn" onclick="arena.shareX()">𝕏 Post</button>
+        <button class="share-btn li-btn" onclick="arena.shareLI()">LinkedIn</button>
+        <button class="share-btn cp-btn" onclick="arena.copyURL()">📋 Copy</button>
       </div>
     </div>
   </div>
 
   <!-- Footer -->
   <footer class="footer">
-    Built by <a href="https://theatomicbuilder.com" target="_blank">The Atomic Builder</a> ⚡
+    <div class="footer-brand">
+      Built by <a href="https://theatomicbuilder.com" target="_blank">The Atomic Builder</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://x.com/faisalxshariff" target="_blank">@faisalxshariff</a>
+    </div>
   </footer>
 
   <script src="js/data.js"></script>
