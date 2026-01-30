@@ -64,7 +64,7 @@ class AIArena {
       const overall = this.getOverall(tool);
       return `
         <div class="tool-card" data-id="${tool.id}" style="--tool-color: ${tool.color}">
-          <div class="tool-overall">${overall}</div>
+          <div class="tool-overall">${overall.toFixed(1)}</div>
           <div class="tool-icon">${tool.icon}</div>
           <div class="tool-name">${tool.name}</div>
           <div class="tool-maker">${tool.maker}</div>
