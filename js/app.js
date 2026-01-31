@@ -113,6 +113,7 @@ class AIArena {
              data-id="${tool.id}" 
              style="--tool-color:${tool.color};--tool-rgb:${tool.colorRgb}">
           <div class="tool-tier" style="color:${tier.color}">${tier.tier}</div>
+          <a class="tool-card-link" href="${tool.url}" target="_blank" rel="noopener" title="Visit ${tool.name}" onclick="event.stopPropagation()">↗</a>
           <div class="tool-card-top">
             <div class="tool-logo">
               <img src="${tool.logo}" alt="${tool.name}" onerror="this.parentElement.innerHTML='<span class=tool-logo-fallback>${tool.name[0]}</span>'">
@@ -224,6 +225,7 @@ class AIArena {
             <div class="fighter-name">${t1.name}</div>
             <div class="fighter-maker">${t1.maker} · ${cat1.icon} ${cat1.name}</div>
             <div class="fighter-model">${t1.model}</div>
+            <a class="fighter-visit" href="${t1.url}" target="_blank" rel="noopener">Visit ${t1.name} →</a>
             ${wId === t1.id ? '<span class="crown">👑</span>' : ''}
           </div>
           <div class="vs-center"><span class="vs-badge">VS</span></div>
@@ -234,6 +236,7 @@ class AIArena {
             <div class="fighter-name">${t2.name}</div>
             <div class="fighter-maker">${t2.maker} · ${cat2.icon} ${cat2.name}</div>
             <div class="fighter-model">${t2.model}</div>
+            <a class="fighter-visit" href="${t2.url}" target="_blank" rel="noopener">Visit ${t2.name} →</a>
             ${wId === t2.id ? '<span class="crown">👑</span>' : ''}
           </div>
         </div>
@@ -285,8 +288,14 @@ class AIArena {
 
   renderDetailPanel(t) {
     const cat = TOOL_CATEGORIES[t.category];
+    const useCasesHtml = (t.topUseCases && t.topUseCases.length > 0)
+      ? `<div class="detail-use-cases">
+          <h4>🎯 Top Use Cases</h4>
+          ${t.topUseCases.map((uc, i) => `<div class="use-case-item"><span class="use-case-num">${i + 1}</span>${uc}</div>`).join('')}
+        </div>`
+      : '';
     return `
-      <div class="detail-panel">
+      <div class="detail-panel" style="--panel-color:${t.color};--panel-rgb:${t.colorRgb}">
         <h4>${cat.icon} ${t.name} — ${cat.name}</h4>
         <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">${t.simpleDesc}</p>
         
@@ -295,6 +304,8 @@ class AIArena {
         
         <h4 style="margin-top:14px">⚠️ Weaknesses</h4>
         ${t.cons.map(c => `<span class="detail-tag con">${c}</span>`).join('')}
+
+        ${useCasesHtml}
         
         <h4 style="margin-top:14px">💰 Pricing</h4>
         <div class="detail-pricing">
@@ -305,6 +316,7 @@ class AIArena {
 
         <div class="detail-best-for"><strong>Best for:</strong> ${t.bestFor}</div>
         <div class="detail-who">👤 ${t.whoFor}</div>
+        <a class="detail-try-btn" href="${t.url}" target="_blank" rel="noopener">Try ${t.name} →</a>
       </div>`;
   }
 
@@ -314,12 +326,20 @@ class AIArena {
       const r1 = t1.ratings[cat.id], r2 = t2.ratings[cat.id];
       const w1 = (r1 / 10) * 100, w2 = (r2 / 10) * 100;
       const win = r1 > r2 ? 'left' : r2 > r1 ? 'right' : 'tie';
+
+      // Get reasons
+      const reason1 = (t1.ratingReasons && t1.ratingReasons[cat.id]) || '';
+      const reason2 = (t2.ratingReasons && t2.ratingReasons[cat.id]) || '';
+
       return `
-        <div class="cat-row" style="animation-delay:${0.1 + i * 0.05}s">
+        <div class="cat-row" style="animation-delay:${0.1 + i * 0.05}s" onclick="this.classList.toggle('expanded')">
+          <div class="cat-score-label left ${win==='left'?'winning':''}" style="color:${t1.color}">
+            <span class="cat-score-num">${r1}</span>
+            <span class="cat-score-text">${getScoreLabel(r1)}</span>
+          </div>
           <div class="cat-bar-container">
             <div class="cat-bar-fill left ${win==='left'?'winning':''}" data-w="${w1}" 
                  style="width:0%;background:${t1.color};--bar-rgb:${t1.colorRgb}">
-              <span>${r1} ${getScoreLabel(r1)}</span>
             </div>
           </div>
           <div class="cat-center">
@@ -329,7 +349,21 @@ class AIArena {
           <div class="cat-bar-container">
             <div class="cat-bar-fill right ${win==='right'?'winning':''}" data-w="${w2}" 
                  style="width:0%;background:${t2.color};--bar-rgb:${t2.colorRgb}">
-              <span>${r2} ${getScoreLabel(r2)}</span>
+            </div>
+          </div>
+          <div class="cat-score-label right ${win==='right'?'winning':''}" style="color:${t2.color}">
+            <span class="cat-score-num">${r2}</span>
+            <span class="cat-score-text">${getScoreLabel(r2)}</span>
+          </div>
+          <div class="cat-expand-hint">click for details</div>
+          <div class="cat-reasons">
+            <div class="cat-reason" style="--reason-color:${t1.color}">
+              <span class="reason-tool" style="color:${t1.color}">${t1.name}</span>
+              ${reason1}
+            </div>
+            <div class="cat-reason" style="--reason-color:${t2.color}">
+              <span class="reason-tool" style="color:${t2.color}">${t2.name}</span>
+              ${reason2}
             </div>
           </div>
         </div>`;
