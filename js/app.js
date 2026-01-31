@@ -5,15 +5,32 @@ class AIArena {
     this.currentBattle = null;
     this.currentSort = 'overall';
     this.activeFilter = null;
+    this._cinematicTimeouts = [];
     this.init();
   }
 
   init() {
+    sfx = new SoundFX();
+    this.initSoundToggle();
     this.renderSelect();
     this.renderRankings();
     this.setupNav();
     this.createStickyBar();
     this.checkURL();
+  }
+
+  // === SOUND TOGGLE ===
+  initSoundToggle() {
+    const btn = document.getElementById('sound-toggle');
+    if (!btn) return;
+    btn.textContent = sfx.muted ? '🔇' : '🔊';
+    btn.addEventListener('click', () => this.toggleSound());
+  }
+
+  toggleSound() {
+    const muted = sfx.toggleMute();
+    const btn = document.getElementById('sound-toggle');
+    if (btn) btn.textContent = muted ? '🔇' : '🔊';
   }
 
   // === NAV ===
@@ -133,6 +150,7 @@ class AIArena {
     });
 
     this.renderQuickPick();
+    this.initHolographicCards();
   }
 
   clearFilter() {
@@ -150,7 +168,6 @@ class AIArena {
       btn.addEventListener('click', () => {
         const cats = JSON.parse(btn.dataset.cats);
         const label = btn.dataset.label;
-        // Clear selection when filtering
         this.selected = [];
         this.updateStickyBar();
         this.renderSelect(cats, label);
@@ -176,6 +193,8 @@ class AIArena {
       this.selected.push(tool);
       card.classList.add('selected');
     }
+
+    sfx.pop();
     this.updatePrompt();
     this.updateStickyBar();
   }
@@ -196,9 +215,92 @@ class AIArena {
     }
   }
 
+  // === HOLOGRAPHIC 3D CARD EFFECT ===
+  initHolographicCards() {
+    if (window.matchMedia('(hover: none)').matches) return;
+    document.querySelectorAll('.tool-card').forEach(card => {
+      this.setupHolographic(card, 15);
+    });
+  }
+
+  initFighterHolographic() {
+    if (window.matchMedia('(hover: none)').matches) return;
+    document.querySelectorAll('.fighter-card').forEach(card => {
+      this.setupHolographic(card, 8);
+    });
+  }
+
+  setupHolographic(card, maxTilt) {
+    // Inject overlay elements
+    if (!card.querySelector('.holo-overlay')) {
+      const holo = document.createElement('div');
+      holo.className = 'holo-overlay';
+      card.appendChild(holo);
+
+      const glare = document.createElement('div');
+      glare.className = 'holo-glare';
+      card.appendChild(glare);
+    }
+
+    const holo = card.querySelector('.holo-overlay');
+    const glare = card.querySelector('.holo-glare');
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const percentX = (x - centerX) / centerX; // -1 to 1
+      const percentY = (y - centerY) / centerY; // -1 to 1
+
+      // 3D tilt
+      const rotY = percentX * maxTilt;
+      const rotX = -percentY * maxTilt;
+      card.style.transition = 'border-color 0.35s, box-shadow 0.35s';
+      card.style.transform = `perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-4px) scale(1.02)`;
+
+      // Holographic rainbow shift
+      const holoX = 50 + percentX * 40;
+      const holoY = 50 + percentY * 40;
+      holo.style.backgroundPosition = `${holoX}% ${holoY}%`;
+      holo.style.opacity = '0.18';
+
+      // Glare light spot
+      const glareX = (x / rect.width) * 100;
+      const glareY = (y / rect.height) * 100;
+      glare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 25%, transparent 55%)`;
+      glare.style.opacity = '1';
+
+      // Intensify border glow
+      const toolColor = getComputedStyle(card).getPropertyValue('--tool-color').trim() ||
+                         getComputedStyle(card).getPropertyValue('--fighter-color').trim();
+      if (toolColor) {
+        card.style.borderColor = toolColor;
+        card.style.boxShadow = `0 0 30px ${toolColor}55, 0 0 60px ${toolColor}20, 0 8px 32px rgba(0,0,0,0.3)`;
+      }
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transition = 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+      card.style.transform = '';
+      card.style.borderColor = '';
+      card.style.boxShadow = '';
+      holo.style.opacity = '0';
+      glare.style.opacity = '0';
+    });
+  }
+
   // === BATTLE ===
   startBattle() {
     if (this.selected.length !== 2) return;
+
+    // Clear any pending cinematic timeouts
+    this._cinematicTimeouts.forEach(clearTimeout);
+    this._cinematicTimeouts = [];
+
+    sfx.whoosh();
+
     const [t1, t2] = this.selected;
     this.currentBattle = { left: t1, right: t2 };
     const url = new URL(window.location);
@@ -282,8 +384,90 @@ class AIArena {
         </div>
       </div>`;
 
-    this.renderCategoryBars(t1, t2);
+    this.renderCategoryBars(t1, t2, false);
     this.highlightVoted(t1.id, t2.id);
+    this.initFighterHolographic();
+    this.cinematicReveal(t1, t2);
+  }
+
+  // === CINEMATIC BATTLE REVEAL ===
+  cinematicReveal(t1, t2) {
+    const container = document.querySelector('#screen-battle .container');
+    if (!container) return;
+
+    const fighters = container.querySelector('.battle-fighters');
+    const vs = container.querySelector('.vs-badge');
+    const verdict = container.querySelector('.verdict');
+    const catRows = container.querySelectorAll('.cat-row');
+    const voteCard = container.querySelector('.vote-card');
+    const details = container.querySelector('.details-section');
+    const actions = container.querySelector('.battle-actions');
+
+    // Hide all elements immediately (before browser paints)
+    if (vs) { vs.style.opacity = '0'; vs.style.animation = 'none'; }
+    if (verdict) { verdict.style.opacity = '0'; verdict.style.transform = 'translateY(15px)'; }
+    if (voteCard) { voteCard.style.opacity = '0'; voteCard.style.transform = 'translateY(15px)'; }
+    if (details) { details.style.opacity = '0'; details.style.transform = 'translateY(15px)'; }
+    if (actions) { actions.style.opacity = '0'; actions.style.transform = 'translateY(15px)'; }
+    catRows.forEach(row => {
+      row.style.opacity = '0';
+      row.style.transform = 'scaleX(0.8) translateY(5px)';
+      row.style.animation = 'none';
+    });
+
+    // 0ms: Fighter cards slide in (handled by existing CSS animation)
+    // 400ms: VS badge + impact + screen shake
+    this._cinematicTimeouts.push(setTimeout(() => {
+      if (vs) {
+        vs.style.opacity = '';
+        vs.style.animation = 'vsFlash 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+      }
+      sfx.impact();
+      if (fighters) {
+        fighters.classList.add('shake');
+        this._cinematicTimeouts.push(setTimeout(() => fighters.classList.remove('shake'), 300));
+      }
+    }, 400));
+
+    // 800ms: Verdict fades in
+    this._cinematicTimeouts.push(setTimeout(() => {
+      if (verdict) {
+        verdict.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        verdict.style.opacity = '1';
+        verdict.style.transform = 'translateY(0)';
+      }
+    }, 800));
+
+    // 1000ms: Victory/Draw sound
+    this._cinematicTimeouts.push(setTimeout(() => {
+      const o1 = this.getOverall(t1), o2 = this.getOverall(t2);
+      if (o1 !== o2) sfx.victory(); else sfx.draw();
+    }, 1000));
+
+    // 1200ms+: Category bars appear ONE AT A TIME
+    catRows.forEach((row, i) => {
+      this._cinematicTimeouts.push(setTimeout(() => {
+        row.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        row.style.opacity = '1';
+        row.style.transform = 'scaleX(1) translateY(0)';
+        sfx.tick();
+        // Animate this row's bar fills
+        row.querySelectorAll('.cat-bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.w + '%';
+        });
+      }, 1200 + i * 150));
+    });
+
+    // After all bars: vote card, details, actions fade in
+    const afterBars = 1200 + catRows.length * 150 + 200;
+    const revealQueue = [voteCard, details, actions].filter(Boolean);
+    revealQueue.forEach((el, i) => {
+      this._cinematicTimeouts.push(setTimeout(() => {
+        el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }, afterBars + i * 120));
+    });
   }
 
   renderDetailPanel(t) {
@@ -320,14 +504,13 @@ class AIArena {
       </div>`;
   }
 
-  renderCategoryBars(t1, t2) {
+  renderCategoryBars(t1, t2, autoAnimate = true) {
     const container = document.getElementById('battle-cats');
     container.innerHTML = CATEGORIES.map((cat, i) => {
       const r1 = t1.ratings[cat.id], r2 = t2.ratings[cat.id];
       const w1 = (r1 / 10) * 100, w2 = (r2 / 10) * 100;
       const win = r1 > r2 ? 'left' : r2 > r1 ? 'right' : 'tie';
 
-      // Get reasons
       const reason1 = (t1.ratingReasons && t1.ratingReasons[cat.id]) || '';
       const reason2 = (t2.ratingReasons && t2.ratingReasons[cat.id]) || '';
 
@@ -369,13 +552,15 @@ class AIArena {
         </div>`;
     }).join('');
 
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        container.querySelectorAll('.cat-bar-fill').forEach(bar => {
-          bar.style.width = bar.dataset.w + '%';
-        });
-      }, 150);
-    });
+    if (autoAnimate) {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          container.querySelectorAll('.cat-bar-fill').forEach(bar => {
+            bar.style.width = bar.dataset.w + '%';
+          });
+        }, 150);
+      });
+    }
   }
 
   // === VOTING ===
@@ -393,6 +578,7 @@ class AIArena {
     if (d.user) d.counts[d.user]++;
     this.saveVotes();
     this.updateVoteUI(a, b);
+    sfx.pop();
   }
 
   updateVoteUI(a, b) {
@@ -499,6 +685,10 @@ class AIArena {
   getOverall(t) { const v = Object.values(t.ratings); return v.reduce((a, b) => a + b, 0) / v.length; }
 
   newBattle() {
+    // Clear cinematic timeouts
+    this._cinematicTimeouts.forEach(clearTimeout);
+    this._cinematicTimeouts = [];
+
     this.selected = [];
     this.updateStickyBar();
     this.renderSelect();
@@ -510,7 +700,6 @@ class AIArena {
   }
 
   randomBattle() {
-    // Pick from same category for relevant comparisons
     const cats = Object.keys(TOOL_CATEGORIES);
     const cat = cats[Math.floor(Math.random() * cats.length)];
     const catTools = TOOLS.filter(t => t.category === cat);
