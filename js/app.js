@@ -156,22 +156,24 @@ class AIArena {
       <div class="container">
         <!-- Fighters -->
         <div class="battle-fighters">
-          <div class="fighter-card left ${wId === t1.id ? 'winner' : wId ? 'loser' : ''}" style="--fighter-color:${t1.color}">
+          <div class="fighter-card left ${wId === t1.id ? 'winner' : wId ? 'loser' : ''}" style="--fighter-color:${t1.color};--fighter-rgb:${t1.colorRgb}">
             <div class="fighter-logo">
               <img src="${t1.logo}" alt="${t1.name}" onerror="this.parentElement.innerHTML='<span style=font-size:1.5rem>${t1.name[0]}</span>'">
             </div>
             <div class="fighter-name">${t1.name}</div>
             <div class="fighter-maker">${t1.maker}</div>
             <div class="fighter-model">${t1.model}</div>
+            ${wId === t1.id ? '<span class="crown">👑</span>' : ''}
           </div>
           <div class="vs-center"><span class="vs-badge">VS</span></div>
-          <div class="fighter-card right ${wId === t2.id ? 'winner' : wId ? 'loser' : ''}" style="--fighter-color:${t2.color}">
+          <div class="fighter-card right ${wId === t2.id ? 'winner' : wId ? 'loser' : ''}" style="--fighter-color:${t2.color};--fighter-rgb:${t2.colorRgb}">
             <div class="fighter-logo">
               <img src="${t2.logo}" alt="${t2.name}" onerror="this.parentElement.innerHTML='<span style=font-size:1.5rem>${t2.name[0]}</span>'">
             </div>
             <div class="fighter-name">${t2.name}</div>
             <div class="fighter-maker">${t2.maker}</div>
             <div class="fighter-model">${t2.model}</div>
+            ${wId === t2.id ? '<span class="crown">👑</span>' : ''}
           </div>
         </div>
 
