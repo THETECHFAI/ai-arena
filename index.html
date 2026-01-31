@@ -21,7 +21,7 @@
   <header class="header">
     <div class="header-badge">Compare · Vote · Decide</div>
     <h1><span>AI Arena</span></h1>
-    <div class="subtitle">Which AI tool actually wins?</div>
+    <div class="subtitle">Which AI tool is right for you?</div>
   </header>
 
   <!-- Nav -->
@@ -39,14 +39,16 @@
         <div class="quick-pick-options" id="quick-pick-options"></div>
       </div>
 
+      <div id="filter-header" style="display:none"></div>
+
       <div class="select-prompt" id="select-prompt">
-        Select <span class="highlight">2 tools</span> to battle
+        Select <span class="highlight">2 tools</span> to compare
       </div>
 
       <div class="tools-grid" id="tools-grid"></div>
 
       <div class="fight-wrap">
-        <button class="fight-btn" id="fight-btn" onclick="arena.startBattle()">Battle →</button>
+        <button class="fight-btn" id="fight-btn" onclick="arena.startBattle()">⚔️ Battle →</button>
       </div>
     </div>
   </div>
